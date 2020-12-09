@@ -3,7 +3,6 @@ lines = File.readlines(ARGV[0])
 ## I did this whole damn thing trying to just check for abc xyz because i misunderstood the input.
 ## -1000 reading comprehension :(
 
-
 passes = []
 index = 0
 lines.each do |line|
@@ -11,14 +10,10 @@ lines.each do |line|
     passes[index] ||= ''
     passes[index] += line.chomp
   else
-    passes[index] = passes[index].chars.uniq.join
     index +=1
   end
 end
-passes[index] = passes[index].chars.uniq.join
-
-passes = passes.join
-puts passes.length
+puts passes.map{|p| p.chars.uniq.join}.join.length
 
 groups = []
 index = 0

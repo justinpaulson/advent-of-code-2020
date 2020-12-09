@@ -24,7 +24,6 @@ end
 puts get_acc(lines)[0]
 
 lines.each_with_index do |(c,a),i|
-  # puts "Index: #{i}"
   if c=="jmp"
     if i==0
       ac, i = get_acc([["nop", a]]+lines[i+1..])
