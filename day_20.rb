@@ -77,7 +77,7 @@ all_poss = []
 tile_grid[[x, y]] = tiles.first
 
 current_tile = tile_grid[[x, y]]
-puts tiles.select{|k,t| tile_edges(t).include?(right(current_tile))}.to_s
+puts tiles.select{|k,t| tile_edges(t).include?(right(current_tile)) && k != }.to_s
 match_tile = tiles.select{|k,t| tile_edges(t).include?(right(current_tile))}
 puts match_tile.values
 puts current_tile
