@@ -58,7 +58,7 @@ def flip_v(tile)
 end
 
 def rotate(tile)
-  tile.map{|t| t.chars}.transpose.map{|t| t.join}
+  tile.map{|t| t.chars}.transpose.map{|t| t.join.reverse}
 end
 
 def print_tile(tile)
@@ -110,48 +110,46 @@ def match_tile_bottom(tile_1, tile_2)
 end
 
 def create_grid(corners, tiles)
+  grid_size = Math.sqrt(tiles.count)
   grid = {}
-  # return rotate(File.readlines('day_20_test').map(&:chomp))
   x, y = 0, 0
   grid[[y,x]] = tiles[corners.last]
-  currentK = corners.last
-  while y < 12
-    while x < 11
+  tiles.delete(corners.last)
+  while y < grid_size
+    while x < grid_size-1
       tile_match = nil
+      match_key = nil
       r = 0
       while !tile_match && r < 4
-        tiles.each{|k,v| tile_match = match_tile_right(grid[[y,x]], v) if match_tile_right(grid[[y,x]], v) && k != currentK}
+        tiles.each{|k,v| match_key,tile_match = k,match_tile_right(grid[[y,x]], v) if match_tile_right(grid[[y,x]], v)}
         unless tile_match
           r += 1
           grid[[y,x]] = rotate grid[[y,x]]
-          puts "Rotating corner"
-          print_tile(grid[[y,x]])
         end
       end
       x += 1
-      puts "Placing (#{y},#{x})"
-      print_tile(tile_match)
+      tiles.delete(match_key)
       grid[[y,x]] = tile_match
     end
     break if y > 10
     x = 0
     tile_match = nil
-    puts "Y, X: #{y}, #{x}"
-    tiles.each{|k,v| tile_match = match_tile_bottom(grid[[y,x]], v) if match_tile_bottom(grid[[y,x]], v)}
+    match_key = nil
+    tiles.each{|k,v| match_key,tile_match = k,match_tile_bottom(grid[[y,x]], v) if match_tile_bottom(grid[[y,x]], v)}
+    tiles.delete(match_key)
     if !tile_match && y==0
-      0.upto(11){|b| grid[[y,b]] = flip_v(grid[[y,b]])}
-      tiles.each{|k,v| tile_match = match_tile_bottom(grid[[y,x]], v) if match_tile_bottom(grid[[y,x]], v) && k != currentK}
+      0.upto(grid_size-1){|b| grid[[y,b]] = flip_v(grid[[y,b]])}
+      tiles.each{|k,v| match_key,tile_match = k,match_tile_bottom(grid[[y,x]], v) if match_tile_bottom(grid[[y,x]], v)}
+      tiles.delete(match_key)
     end
     y += 1
-    puts "Placing (#{y},#{x})"
-    print_tile(tile_match)
-    grid[[y,x]] = tile_match if y < 12
+    grid[[y,x]] = tile_match if y < grid_size
   end
   tile_grid = []
-  0.upto(11) do |y|
+  0.upto(grid_size-1) do |y|
     1.upto(grid[[y,0]].length-2) do |i|
       line = ""
-      0.upto(11) do |x|
+      0.upto(grid_size-1) do |x|
         line += grid[[y,x]][i][1..-2]
       end
       tile_grid << line
@@ -184,18 +182,17 @@ puts corners.inject(:*)
 
 # sea monster
 #
-#
 #                     #
 #  /#....##....##....###/
 #   /#..#..#..#..#..#/
 
 tile_grid = create_grid(corners, tiles)
-print_tile(tile_grid)
-return
 
 dragons = []
 r = 0
 while dragons.count < 1 && r < 4
+  r += 1
+  tile_grid = rotate(tile_grid)
   top_indexes, mid_indexes, bottom_indexes = [],[],[]
   1.upto(tile_grid.length - 2).each do |i|
     top_indexes = tile_grid[i-1].gsub(/#/).map{ Regexp.last_match.begin(0) }
@@ -203,14 +200,11 @@ while dragons.count < 1 && r < 4
     bottom_indexes = tile_grid[i+1].gsub(/#..#..#..#..#..#/).map{ Regexp.last_match.begin(0) }
     mid_indexes.each do |mid_index|
       bottom_indexes.each do |bottom_index|
-        dragons << bottom_index if mid_index + 1 == bottom_index && top_indexes.include?(bottom_index + 17)
+        dragons << [i,bottom_index] if mid_index + 1 == bottom_index && top_indexes.include?(bottom_index + 17)
       end
     end
   end
-  r += 1
-  tile_grid = rotate(tile_grid)
 end
-
 
 if dragons.count < 1
   tile_grid = flip_v(tile_grid)
@@ -218,21 +212,19 @@ if dragons.count < 1
 end
 
 while dragons.count < 1 && r < 4
+  r += 1
+  tile_grid = rotate(tile_grid)
   top_indexes, mid_indexes, bottom_indexes = [],[],[]
   1.upto(tile_grid.length - 2).each do |i|
     top_indexes = tile_grid[i-1].gsub(/#/).map{ Regexp.last_match.begin(0) }
-    mid_indexes = tile_grid[i].gsub(/#....##....##....###/).map{ Regexp.last_match.begin(0) }
-    bottom_indexes = tile_grid[i+1].gsub(/#..#..#..#..#..#/).map{ Regexp.last_match.begin(0) }
+    mid_indexes = tile_grid[i].enum_for(:scan, /(?=(#....##....##....###))/).map { Regexp.last_match.begin(0) }
+    bottom_indexes = tile_grid[i+1].enum_for(:scan, /(?=(#..#..#..#..#..#))/).map { Regexp.last_match.begin(0) }
     mid_indexes.each do |mid_index|
       bottom_indexes.each do |bottom_index|
-        dragons << bottom_index if mid_index + 1 == bottom_index && top_indexes.include?(bottom_index + 17)
+        dragons << [i,bottom_index] if mid_index + 1 == bottom_index && top_indexes.include?(bottom_index + 17)
       end
     end
   end
-  r += 1
-  tile_grid = rotate(tile_grid)
 end
-puts "Total #s: #{tile_grid.join.count('#')}"
-puts "Total Dragons: #{dragons.count}"
-puts tile_grid.join.count('#') - (dragons.count * 15)
 
+puts tile_grid.join.count('#') - (dragons.count * 15)
